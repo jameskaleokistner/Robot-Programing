@@ -2,31 +2,36 @@
 from ev3dev2.motor import LargeMotor , OUTPUT_B , OUTPUT_C , MoveTank , SpeedPercent
 from time import sleep
 from ev3dev2.sound import Sound
-from ev3dev2.sensor.lego import ColorSensor
-
+from ev3dev2.sensor.lego import ColorSensor, TouchSensor, UltrasonicSensor
 
 drive = MoveTank(OUTPUT_B , OUTPUT_C)
 cs = ColorSensor()
+us = UltrasonicSensor()
+ts = TouchSensor()
 sound = Sound()
+
+us.mode = US_DIST_CM
 
 def moveForward(a = 10, b = 10, c = 0.20):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), c)
 
-def turn(a = 1, b = 1):
-    drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), 0.025)
+def turn(a = 1.0, b = 1.0, c = 0.025):
+    drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), c)
 
-def pivotRight():
-    drive.on_for_rotations(SpeedPercent(5), SpeedPercent(0), 0.025)
+def pivotRight(c = 0.025):
+    drive.on_for_rotations(SpeedPercent(5), SpeedPercent(0), c)
 def pivotRight90(a = 20, b = 0, c = 1):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), c)
 def pivotLeft90():
     drive.on_for_rotations(SpeedPercent(0), SpeedPercent(15), 1)
 def pivotRightReverse():
     drive.on_for_rotations(SpeedPercent(-5), SpeedPercent(0), 0.025)
-def pivotLeft():
-    drive.on_for_rotations(SpeedPercent(0), SpeedPercent(5), 0.025)
+def pivotLeft(c = 0.025):
+    drive.on_for_rotations(SpeedPercent(0), SpeedPercent(5), c)
 def pivotLeftReverse():
     drive.on_for_rotations(SpeedPercent(0), SpeedPercent(-5), 0.025)
+
+# check to see if we the robot need to correct its course
 def check():
     count = 0
     while (cs.value() <= 40):
@@ -155,7 +160,7 @@ while True:
     pivotValue = check()
     move = correctLong(pivotValue)
     while cs.value() <= 40:
-        moveForward(move[0],move[1],c=c2)
+        moveForward(move[0], move[1], c=c2)
 
     c2 = 1.7
     moveForward(move[0],move[1],c=c2)
@@ -163,12 +168,31 @@ while True:
     onBlack = continuousBlack()
 
     while onBlack == False:
-        moveForward(move[0],move[1],c=0.25)
+        moveForward(move[0], move[1], c=0.25)
         sleep(0.25)
         onBlack = continuousBlack()
 
     blackTiles = blackTiles + 1
     sound.beep()
     c2 = 0.1
+
+pivotLeft(c = 1.88)
+
+turnLeft = True
+move = [10, 10]
+
+sound.speak("Detecting object")
+
+while us.value() > 100:
+
+    moveForward(c=1)
+
+    if turnLeft:
+        pivotLeft()
+        turnLeft = False
+    else:
+        pivotRight()
+        turnLeft = True
+
 
 
