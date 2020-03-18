@@ -14,19 +14,26 @@ def moveForward(a = 10, b = 10, c = 0.20):
 
 def turnLeft(a = -10, b = 10):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), 0.5)
+
 def turnRight(a = 10, b = -10):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), 0.5)
 
 def pivotRight():
     drive.on_for_rotations(SpeedPercent(5), SpeedPercent(0), 0.075)
+
 def pivotRight90():
     drive.on_for_rotations(SpeedPercent(10), SpeedPercent(0), 0.5)
+
 def pivotRightReverse():
     drive.on_for_rotations(SpeedPercent(-5), SpeedPercent(0), 0.075)
+
 def pivotLeft():
     drive.on_for_rotations(SpeedPercent(0), SpeedPercent(5), 0.075)
+
 def pivotLeftReverse():
     drive.on_for_rotations(SpeedPercent(0), SpeedPercent(-5), 0.075)
+
+# Returns a value for if the robot needs to be corrected left, right, or neither.
 def check():
     count = 0
     while (cs.value() <= 40):
@@ -50,6 +57,8 @@ def check():
     correctPiv = rightPiv - leftPiv
     return correctPiv
 
+# Returns an array of 2 numbers that will be arguments for the moveForward method.
+# The 2 numbers will be dependent on the return value of the check method.
 def correct(pivotValue):
     if (pivotValue > 0):
         move = [10.5, 10]
@@ -67,13 +76,15 @@ onBlack = True
 blackTiles = 1
 sound.beep()
 move = [10, 10]
+# loop indefinitely
 while True:
+    # if the robot goes from a white to a black tile
     if (cs.value() <= 40 and onBlack == False):
         if(blackTiles < 3):
             onBlack = True
             blackTiles = blackTiles + 1
             sound.beep()
-        else:
+        else: # check if a correction if necessary after the 3rd black tile
             onBlack = True
             moveForward(c = 0.075)
             blackTiles = blackTiles + 1
@@ -81,20 +92,25 @@ while True:
             pivotValue = check()
             print(pivotValue)
             move = correct(pivotValue)
-    elif (cs.value() <= 40):
+    elif (cs.value() <= 40): # robot is on a black tile
         onBlack = True
     else:
-        onBlack = False
+        onBlack = False # robot is on a white tile
 
+    # Break out of the while loop after moving over 7 black tiles
     if (blackTiles >= 7):
         break
 
-    moveForward(move[0], move[1])
+    moveForward(move[0], move[1]) # move forward using the values determined by the check() and correct() functions
+
 
 sleep(2)
 sound.beep()
+
+# Pivot to the right and reset the black count
 pivotRight90()
 blackTiles = 0
+
 
 count = 0
 while blackTiles < 1:
@@ -104,7 +120,19 @@ while blackTiles < 1:
     count = count + 1
 
 
-sound.speak(str(count) + "rotations")
+sound.speak(str(count) + "rotations"
+                         
+                         
+'''
+while blackTiles < 6
+    move forward (checking regularly)
+    
+turn about 20 degrees
+
+while not found
+    move forward
+    attempt to detect the object using the 
+'''
 
 #continuous = True
 '''while True:
