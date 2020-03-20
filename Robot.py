@@ -10,14 +10,14 @@ us = UltrasonicSensor()
 ts = TouchSensor()
 sound = Sound()
 
-us.mode = US_DIST_CM
+ts.mode = 'TOUCH'
+us.mode = 'US-DIST-CM'
 
+blackValue = 20
 def moveForward(a = 10, b = 10, c = 0.20):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), c)
-
-def turn(a = 1.0, b = 1.0, c = 0.025):
+def turning(a = 1.0, b =-1.0, c = 0.025):
     drive.on_for_rotations(SpeedPercent(a), SpeedPercent(b), c)
-
 def pivotRight(c = 0.025):
     drive.on_for_rotations(SpeedPercent(5), SpeedPercent(0), c)
 def pivotRight90(a = 20, b = 0, c = 1):
@@ -34,7 +34,7 @@ def pivotLeftReverse():
 # check to see if we the robot need to correct its course
 def check():
     count = 0
-    while (cs.value() <= 40):
+    while (cs.value() <= blackValue):
         pivotRightReverse()
         count = count + 1
         sleep(0.1)
@@ -43,12 +43,35 @@ def check():
         sleep(0.1)
     rightPiv = count
     count = 0
-    while (cs.value() <= 40):
+    while (cs.value() <= blackValue):
         pivotLeftReverse()
         count = count + 1
         sleep(0.1)
     for i in range(count):
         pivotLeft()
+        sleep(0.1)
+    leftPiv = count
+
+    correctPiv = rightPiv - leftPiv
+    return correctPiv
+
+def checkLong():
+    count = 0
+    while (cs.value() <= blackValue):
+        pivotRight()
+        count = count + 1
+        sleep(0.1)
+    for i in range(count):
+        pivotRightReverse()
+        sleep(0.1)
+    rightPiv = count
+    count = 0
+    while (cs.value() <= blackValue):
+        pivotLeft()
+        count = count + 1
+        sleep(0.1)
+    for i in range(count):
+        pivotLeftReverse()
         sleep(0.1)
     leftPiv = count
 
@@ -64,19 +87,19 @@ def correct(pivotValue):
         move = [10, 10]
     return move
 
-def correctLong(pivotValue2):
+def correctLong(pivotValue2, b = 0.5):
     if (pivotValue2 > 0):
-        move2 = [10, 10.25]
+        move2 = [10 + b, 10]
     elif (pivotValue2 < 0):
-        move2 = [10.25, 10]
+        move2 = [10, 10 + b]
     else:
         move2 = [10, 10]
     return move2
 
 def continuousBlack():
-    if cs.value() <= 40:
+    if cs.value() <= blackValue:
         moveForward(c=0.1)
-        if cs.value() <= 40:
+        if cs.value() <= blackValue:
             moveForward(c=-0.05)
             return True
         return False
@@ -86,7 +109,7 @@ def continuousBlack():
 
 cs.mode='COL-REFLECT'
 
-
+#FIRST PHASE
 moveForward(c = 0.4)
 sleep(2)
 pivotRight90()
@@ -98,7 +121,7 @@ blackTiles = 1
 sound.beep()
 move = [10, 10]
 while True:
-    if (cs.value() <= 40 and onBlack == False):
+    if (cs.value() <= blackValue and onBlack == False):
         blackTiles = blackTiles + 1
         if(blackTiles < 3):
             onBlack = True
@@ -121,7 +144,7 @@ while True:
             pivotValue = check()
             print(pivotValue)
             move = correct(pivotValue)
-    elif (cs.value() <= 40):
+    elif (cs.value() <= blackValue):
         onBlack = True
     else:
         onBlack = False
@@ -133,22 +156,24 @@ while True:
 
 sleep(2)
 sound.beep()
-pivotRight90(c = 0.95)
+#SECOND PHASE
+moveForward(c = 0.3)
+pivotRight90()
+sleep(1)
+moveForward(a = -10,b =-10,c = 0.2)
+sleep(1)
+pivotValue = check()
+move = correctLong(pivotValue)
 
 
-while cs.value() > 40:
-    moveForward(c = -0.1)
-    sleep(0.25)
+moveForward(a = move[0], b = move[1], c = 1.7)
 
-
-moveForward(c = 1.7)
 onBlack = continuousBlack()
 
 while onBlack == False:
     moveForward(c=0.25)
     sleep(0.25)
     onBlack = continuousBlack()
-
 
 blackTiles = 1
 move = [10,10]
@@ -157,9 +182,9 @@ c2 = 0.1
 while True:
     if blackTiles == 6:
         break
-    pivotValue = check()
-    move = correctLong(pivotValue)
-    while cs.value() <= 40:
+    pivotValue = checkLong()
+    move = correctLong(pivotValue, b = 0.25)
+    while cs.value() <= blackValue:
         moveForward(move[0], move[1], c=c2)
 
     c2 = 1.7
@@ -176,23 +201,19 @@ while True:
     sound.beep()
     c2 = 0.1
 
-pivotLeft(c = 1.88)
+#Third Phase
+moveForward(0.1)
+pivotLeft90()
 
-turnLeft = True
-move = [10, 10]
+moveForward(c = 5)
 
-sound.speak("Detecting object")
+#fourth Phase
 
-while us.value() > 100:
-
-    moveForward(c=1)
-
-    if turnLeft:
-        pivotLeft()
-        turnLeft = False
-    else:
-        pivotRight()
-        turnLeft = True
-
-
+detected = False
+while detected == False:
+    turning(a = 1, b = -1, c = 0.2)
+    usv = us.value()
+    if(usv <= 300):
+        detected = True
+sound.beep()
 
